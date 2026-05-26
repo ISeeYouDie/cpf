@@ -1,0 +1,123 @@
+import random
+import re
+import os
+
+def limpar_tela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def obter_estado_cpf(cpf):
+    """Descobre a região fiscal de origem do CPF com base no 9º dígito"""
+    regioes = {
+        '1': 'DF, GO, MT, MS, TO',
+        '2': 'AC, AM, AP, PA, RO, RR',
+        '3': 'CE, MA, PI',
+        '4': 'AL, PB, PE, RN',
+        '5': 'BA, SE',
+        '6': 'MG',
+        '7': 'ES, RJ',
+        '8': 'SP',
+        '9': 'PR, SC',
+        '0': 'RS'
+    }
+    # O nono dígito define a região fiscal
+    nono_digito = cpf[8]
+    return regioes.get(nono_digito, "Desconhecida")
+
+def validar_cpf(cpf):
+    """Valida matematicamente um CPF"""
+    # Remove caracteres não numéricos
+    cpf = re.sub(r'\D', '', cpf)
+
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        return False
+
+    # Validação do primeiro dígito
+    soma = sum(int(cpf[i]) * (10 - i) for i in range(9))
+    resto = (soma * 10) % 11
+    if resto == 10 or resto == 11:
+        resto = 0
+    if resto != int(cpf[9]):
+        return False
+
+    # Validação do segundo dígito
+    soma = sum(int(cpf[i]) * (11 - i) for i in range(10))
+    resto = (soma * 10) % 11
+    if resto == 10 or resto == 11:
+        resto = 0
+    if resto != int(cpf[10]):
+        return False
+
+    return True
+
+def gerar_cpf():
+    """Gera um CPF válido para testes"""
+    cpf = [random.randint(0, 9) for _ in range(9)]
+    
+    # Primeiro dígito
+    soma = sum(cpf[i] * (10 - i) for i in range(9))
+    resto = (soma * 10) % 11
+    cpf.append(0 if resto in (10, 11) else resto)
+    
+    # Segundo dígito
+    soma = sum(cpf[i] * (11 - i) for i in range(10))
+    resto = (soma * 10) % 11
+    cpf.append(0 if resto in (10, 11) else resto)
+    
+    return ''.join(map(str, cpf))
+
+def formatar_cpf(cpf):
+    cpf = re.sub(r'\D', '', cpf)
+    return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+
+# Nomes fictícios para simulação de consulta
+NOMES_TESTE = ["Ana Silva", "Carlos Santos", "Mariana Oliveira", "Bruno Souza", "Beatriz Lima"]
+
+def menu():
+    while True:
+        limpar_tela()
+        print("="*45)
+        print("      TOOL DE TESTES E CONSULTA DE CPF")
+        print("="*45)
+        print("[1] Consultar / Validar CPF")
+        print("[2] Gerar CPF Válido para Testes")
+        print("[0] Sair")
+        print("="*45)
+        
+        opcao = input("Escolha uma opção: ")
+        
+        if opcao == '1':
+            limpar_tela()
+            print("--- CONSULTA DE CPF ---")
+            cpf_input = input("Digite o CPF (com ou sem pontos/hífen): ")
+            cpf_limpo = re.sub(r'\D', '', cpf_input)
+            
+            if validar_cpf(cpf_limpo):
+                estado = obter_estado_cpf(cpf_limpo)
+                print("\n[+] SITUAÇÃO: VÁLIDO (Estrutura matemática correta)")
+                print(f"[+] CPF Formatado: {formatar_cpf(cpf_limpo)}")
+                print(f"[+] Região de Origem: {estado}")
+                print(f"[+] Nome Simulado: {random.choice(NOMES_TESTE)} (Dado fictício para teste)")
+                print(f"[+] Data de Nasc. Simbólica: {random.randint(1,28)}/{random.randint(1,12)}/{random.randint(1970,2005)}")
+            else:
+                print("\n[-] SITUAÇÃO: INVÁLIDO!")
+                print("[-] O CPF informado não passou nas regras de validação de dígitos.")
+                
+            input("\nPressione Enter para voltar ao menu...")
+            
+        elif opcao == '2':
+            limpar_tela()
+            print("--- GERADOR DE CPF ---")
+            novo_cpf = gerar_cpf()
+            print(f"\n[+] CPF Gerado: {novo_cpf}")
+            print(f"[+] Formatado: {formatar_cpf(novo_cpf)}")
+            print(f"[+] Região Fiscal: {obter_estado_cpf(novo_cpf)}")
+            input("\nPressione Enter para voltar ao menu...")
+            
+        elif opcao == '0':
+            print("\nSaindo... Até logo!")
+            break
+        else:
+            input("\nOpção inválida! Pressione Enter para tentar novamente...")
+
+if __name__ == "__main__":
+    menu()
